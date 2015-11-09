@@ -1,4 +1,11 @@
-from graph_tool.all import *
+try:
+    from graph_tool.all import *
+except ImportError:
+    try:
+        from graph_tool_igraph import *
+    except ImportError:
+        raise Exception("'graph_tool' or 'graph_tool_igraph' and 'igraph' must be installed")
+    
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
@@ -14,10 +21,10 @@ import math, random
 
 import os, sys, copy
 #import powerlaw
+import itertools
 
 from nltk.corpus import wordnet as wn
 from nltk.corpus import wordnet_ic
-
 
 #---------------------------------------------------#
 def process_norms(norms_dir, words_filter):
@@ -36,7 +43,7 @@ def process_norms(norms_dir, words_filter):
             target = nodes[1].strip().lower() + ":N"
 
             if cue in words_filter: #TODO
-               if target in words_filter: #TODO
+                if target in words_filter: #TODO
                     if not norms.has_key(cue):
                         norms[cue] = []
 
@@ -1124,31 +1131,29 @@ class WordsGraph():
             word_vertex_map[word] = graph.add_vertex()
             graph.vertex_properties["label"][word_vertex_map[word]] = word
 
+        
+        all_word_pairs = itertools.combinations(words,2)
 
-        for word in words:
-            for otherword in words:
-                if word == otherword:
-                    continue
+        for word,otherword in all_word_pairs:
+            vert = word_vertex_map[word]
+            othervert =  word_vertex_map[otherword]
 
-                vert = word_vertex_map[word]
-                othervert =  word_vertex_map[otherword]
+            if graph.edge(vert, othervert) != None or graph.edge(othervert, vert)!= None:
+                continue
 
-                if graph.edge(vert, othervert) != None or graph.edge(othervert, vert)!= None:
-                    continue
+            word_m = lexicon.meaning(word)
+            #word_m_top_features = self.select_features(word_m._meaning_probs)
 
-                word_m = lexicon.meaning(word)
-#                word_m_top_features = self.select_features(word_m._meaning_probs)
-
-                otherword_m = lexicon.meaning(otherword)
-#                otherword_m_top_features = self.select_features(otherword_m._meaning_probs)
+            otherword_m = lexicon.meaning(otherword)
+            #otherword_m_top_features = self.select_features(otherword_m._meaning_probs)
 
 
-                #sim = self.calculate_similarity(word_m_top_features, otherword_m_top_features)
-                sim = evaluate.calculate_similarity(beta, word_m, otherword_m, simtype)
+            #sim = self.calculate_similarity(word_m_top_features, otherword_m_top_features)
+            sim = evaluate.calculate_similarity(beta, word_m, otherword_m, simtype)
 
-                if sim >= self._sim_threshold:
-                    new_edge = graph.add_edge(vert, othervert)
-                    graph.edge_properties["distance"][new_edge] = max(0, 1 - sim ) #distance #TODO
+            if sim >= self._sim_threshold:
+                new_edge = graph.add_edge(vert, othervert)
+                graph.edge_properties["distance"][new_edge] = max(0, 1 - sim ) #distance #TODO
 
         return graph
 

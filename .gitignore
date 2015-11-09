@@ -1,1 +1,5 @@
 *.pyc
+*\README.SD
+*\graph_tool_igraph.py
+*.svg
+
