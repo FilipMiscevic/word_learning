@@ -1116,7 +1116,7 @@ class WordsGraph():
 
         return avg_local_clust[0], median_sp
 
-    def create_final_graph(self, words, lexicon, beta, simtype):
+    def create_final_graph(self, words, lexicon, beta, simtype,words_to_compare=None):
         """ create a graph, given a set of words and their meanings """
 
         graph = Graph(directed=False)
@@ -1154,6 +1154,39 @@ class WordsGraph():
             if sim >= self._sim_threshold:
                 new_edge = graph.add_edge(vert, othervert)
                 graph.edge_properties["distance"][new_edge] = max(0, 1 - sim ) #distance #TODO
+                
+        if words_to_compare:
+            
+            words_to_compare = list(set(words_to_compare)-set(words))
+            
+            
+            for _word in words_to_compare:                
+                for _otherword in words:
+                    
+                    if _word == _otherword:
+                        continue
+                    
+                    _word_m = lexicon.meaning(_word)
+                    #word_m_top_features = self.select_features(word_m._meaning_probs)
+        
+                    _otherword_m = lexicon.meaning(_otherword)
+                    #otherword_m_top_features = self.select_features(otherword_m._meaning_probs)
+        
+        
+                    #sim = self.calculate_similarity(word_m_top_features, otherword_m_top_features)
+                    _sim = evaluate.calculate_similarity(beta, _word_m, _otherword_m, simtype)
+        
+                    if _sim >= self._sim_threshold:
+                        #print _sim
+                        _vert = word_vertex_map[_word] = graph.add_vertex()
+                        graph.vertex_properties["label"][_vert] = _word
+                        
+                        _othervert =  word_vertex_map[_otherword]
+                        #print _word
+                        #print _otherword
+                        
+                        _new_edge = graph.add_edge(_vert, _othervert)
+                        graph.edge_properties["distance"][_new_edge] = max(0, 1 - _sim ) #distance #TODO                    
 
         return graph
 
